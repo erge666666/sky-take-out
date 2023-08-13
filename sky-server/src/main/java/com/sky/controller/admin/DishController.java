@@ -2,6 +2,7 @@ package com.sky.controller.admin;
 
 import com.sky.dto.DishDTO;
 import com.sky.dto.DishPageQueryDTO;
+import com.sky.entity.Dish;
 import com.sky.result.PageResult;
 import com.sky.result.Result;
 import com.sky.service.DishService;
@@ -13,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Arrays;
+import java.util.List;
 
 //菜品管理
 @RestController
@@ -51,4 +53,30 @@ public class DishController {
         return Result.success();
     }
 
+    //根据id查询菜品
+    @GetMapping("/{id}")
+    @ApiOperation("根据id查询菜品接口")
+    public Result<DishVO> select(@PathVariable Long id){
+        log.info("根据id查询的菜品{}",id);
+        DishVO dishVO=dishService.getByidwithFlavor(id);
+        return Result.success(dishVO);
+    }
+
+    //修改菜品
+    @PutMapping
+    @ApiOperation("修改菜品接口")
+    public Result update(@RequestBody DishDTO dishDTO){
+        log.info("修改菜品返回的数据{}",dishDTO);
+        dishService.dishupdate(dishDTO);
+        return Result.success();
+    }
+
+    //根据分类查询菜品
+    @GetMapping("/list")
+    @ApiOperation("根据分类查询菜品")
+    public Result<List<Dish>> getcategoryid(@RequestParam Long categoryId){
+        log.info("{}",categoryId);
+        List<Dish> list=dishService.getcategoryid(categoryId);
+        return Result.success(list);
+    }
 }

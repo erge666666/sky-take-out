@@ -9,4 +9,21 @@
                 #{id}
             </foreach>
     </select>
+<!--    分页-->
+    <select id="getpage" resultType="com.sky.vo.SetmealVO">
+        SELECT s.id,s.category_id,s.name,s.price,s.status,s.description,s.image,s.update_time,c.name AS categoryName FROM setmeal s left JOIN category c
+            on s.category_id=c.id
+        <where>
+            <if test="name!=null">s.name=#{name}</if>
+            <if test="status!=null">s.status=#{status}</if>
+            <if test="categoryId!=null">s.category_id=#{categoryId}</if>
+        </where>
+    </select>
+
+    <insert id="save">
+        insert into setmeal_dish(id, setmeal_id, dish_id, name, price, copies)
+values (
+        #{id},#{setmealId},#{dishId},#{name},#{price},#{copies}
+       )
+    </insert>
 </mapper>
