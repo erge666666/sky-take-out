@@ -49,14 +49,15 @@ public class UserServiceImpl implements UserService {
         if(openid==null){
             throw new LoginFailedException(MessageConstant.LOGIN_FAILED);
         }
-        //表示null表示登录成功，再判断数据库有没有这个用户
+        //不是null表示登录成功，再判断数据库有没有这个用户
         User user=userMapper.getopenid(openid);
-        //有的话上面会返回，没有的话创建用户
+        //有上面会返回，没有的话创建用户
         if (user==null){
             user = User.builder()
                     .openid(openid)
                     .createTime(LocalDateTime.now())
                     .build();
+            //没有添加到数据库
             userMapper.save(user);
         }
 
