@@ -5,14 +5,19 @@ import com.sky.entity.Orders;
 import com.sky.mapper.OrderMapper;
 import com.sky.mapper.UserMapper;
 import com.sky.service.ReportService;
-import com.sky.vo.OrderReportVO;
-import com.sky.vo.SalesTop10ReportVO;
-import com.sky.vo.TurnoverReportVO;
-import com.sky.vo.UserReportVO;
+import com.sky.service.WorkspaceService;
+import com.sky.vo.*;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -28,6 +33,8 @@ public class ReportServiceImpl implements ReportService {
     private OrderMapper orderMapper;
     @Autowired
     private UserMapper userMapper;
+    @Autowired
+    private WorkspaceService workspaceService;
 
     /**
      * 营业额统计
@@ -207,5 +214,81 @@ public class ReportServiceImpl implements ReportService {
                 .nameList(namelist)
                 .numberList(numberlist)
                 .build();
+    }
+
+    /**
+     * 导出数据
+     * @param response
+     */
+    @Override
+    public void export(HttpServletResponse response) {
+
+        LocalDate datebegin = LocalDate.now().plusDays(-31);
+        LocalDate dateend=LocalDate.now().plusDays(-1);
+
+        //处理成LOcaldatetime
+        LocalDateTime begin = LocalDateTime.of(datebegin, LocalTime.MIN);
+        LocalDateTime end = LocalDateTime.of(dateend, LocalTime.MAX);
+
+        //查询数据库
+        BusinessDataVO businessData = workspaceService.getBusinessData(begin, end);
+
+        //写入excel文件
+        InputStream in = this.getClass().getClassLoader().getResourceAsStream("template/运营数据报表模板.xlsx");
+
+        //写成excel
+        try {
+            XSSFWorkbook excel=new XSSFWorkbook(in);
+            XSSFSheet sheet = excel.getSheetAt(0);
+
+            //时间
+            sheet.getRow(1).getCell(1).setCellValue("时间:"+datebegin+"至"+dateend);
+            //营业额
+            sheet.getRow(3).getCell(2).setCellValue(businessData.getTurnover());
+            //订单完成率
+            sheet.getRow(3).getCell(4).setCellValue(businessData.getOrderCompletionRate());
+            //新增用户数
+            sheet.getRow(3).getCell(6).setCellValue(businessData.getNewUsers());
+
+            //有效订单
+            sheet.getRow(4).getCell(2).setCellValue(businessData.getValidOrderCount());
+            //平均客单价
+            sheet.getRow(4).getCell(4).setCellValue(businessData.getUnitPrice());
+
+            //填充明细数据
+            for (int i = 0; i < 30; i++) {
+                LocalDate date = datebegin.plusDays(i);
+                //一天
+                BusinessDataVO businessData1 = workspaceService.getBusinessData(LocalDateTime.of(date, LocalTime.MIN), LocalDateTime.of(date, LocalTime.MAX));
+                //获取每一行
+                XSSFRow row = sheet.getRow(7 + i);
+                //日期格
+                row.getCell(1).setCellValue(date.toString());
+                //营业额
+                row.getCell(2).setCellValue(businessData1.getTurnover());
+                //有效订单
+                row.getCell(3).setCellValue(businessData1.getValidOrderCount());
+                //订单完成率
+                row.getCell(4).setCellValue(businessData1.getOrderCompletionRate());
+                //平均客单价
+                row.getCell(5).setCellValue(businessData1.getUnitPrice());
+                //新增用户数
+                row.getCell(6).setCellValue(businessData1.getNewUsers());
+
+
+            }
+
+            //通过输出流将excel文件下载到客户端浏览
+            ServletOutputStream out = response.getOutputStream();
+            excel.write(out);
+
+            excel.close();
+            out.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+
+
     }
 }

@@ -74,4 +74,6 @@ public interface OrderService {
      * @param id
      */
     void wcdd(Long id);
+
+    void cudian(Long id);
 }

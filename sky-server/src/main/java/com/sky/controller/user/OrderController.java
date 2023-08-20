@@ -16,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.websocket.server.PathParam;
+
 @RestController("userController")
 @RequestMapping("/user/order")
 @Slf4j
@@ -96,6 +98,18 @@ public class OrderController {
     public Result zlyd(@PathVariable Long id){
         log.info("返回的订单id为:{}",id);
         orderService.zlyd(id);
+        return Result.success();
+    }
+
+
+    /**
+     * 催单
+     */
+    @GetMapping("/reminder/{id}")
+    @ApiOperation("催单")
+    public Result cuidan(@PathVariable Long id){
+        log.info("催单{}",id);
+        orderService.cudian(id);
         return Result.success();
     }
 }
